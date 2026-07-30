@@ -10,18 +10,13 @@ from telegram.ext import (
     filters
 )
 
-
 from menu import main_menu
-
 from game import register_user
-
 from profile import profile_text
-
 from ranking import ranking_text
-
 from riddles import get_riddle
-
-from answers import save_answer, check_answer
+from answers import save_answer,
+check_answer
 
 from treasure import open_treasure
 
@@ -32,52 +27,48 @@ from vip import (
     add_vip_request
 )
 
-
 from referrals import (
     add_referral,
     get_referrals,
     referral_link
 )
 
-
-from support import add_support_message
-
+from support import
+add_support_message
 
 from admin_panel import setup_admin
-
 
 
 TOKEN = os.getenv("BOT_TOKEN")
 
 
-
-BOT_USERNAME = "SalarPlay137Bot"
-
+"BOT_USERNAME = "SalarPlay137Bot
 
 
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def start(update: Update,
+    : context: ContextTypes.DEFAULT_TYPE)
 
     user = update.effective_user
 
 
-    register_user(
+    )register_user
         user.id,
-        user.username or user.first_name
+        user.username or 
+user.first_name
     )
 
 
-    # ثبت دعوت دوستان
+    # ثبت دعوت دوستان    
+if context.args:      
+ 
+    try:
 
-    if context.args:
-
-        try:
-
-            inviter_id = int(context.args[0])
+            inviter_id = 
+        int(context.args[0])
 
             add_referral(
                 user.id,
-                inviter_id
+            inviter_id
             )
 
         except:
@@ -99,7 +90,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
+    
     text = update.message.text
 
     user_id = update.effective_user.id
