@@ -1,4 +1,5 @@
-import os
+from riddles import get_riddle
+from answers import save_riddle, check_answerimport os
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
@@ -25,12 +26,18 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
+    
+if text == "🎮 شروع بازی":riddle = get_riddle()
 
-    if text == "🎮 شروع بازی":
-        await update.message.reply_text(
-            "🧩 به‌زودی اولین معما برایت نمایش داده می‌شود!"
-        )
+save_riddle(
+    update.effective_user.id,
+    riddle["answer"]
+)
 
+await update.message.reply_text(
+    "🧩 معما:\n\n" + riddle["question"] +
+    "\n\nجوابت رو بفرست."
+)
     elif text == "👤 پروفایل":
         await update.message.reply_text(
             "👤 پروفایل بازیکن در حال آماده‌سازی است."
