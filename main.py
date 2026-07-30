@@ -6,15 +6,17 @@ from telegram.ext import (
     CommandHandler,
     MessageHandler,
     ContextTypes,
-    filters,
+    filters
 )
 
 from menu import main_menu
 from game import register_user
 from profile import profile_text
+from ranking import ranking_text
 from riddles import get_riddle
 from answers import save_answer, check_answer
 from treasure import open_treasure
+
 
 TOKEN = os.getenv("BOT_TOKEN")
 
@@ -33,11 +35,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     user_id = update.effective_user.id
 
+
     if text == "🎮 شروع بازی":
+
         riddle = get_riddle()
 
         save_answer(
@@ -48,44 +52,60 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "🧩 معما:\n\n"
             + riddle["question"]
+            + "\n\nجوابت رو بفرست."
         )
 
+
     elif text == "👤 پروفایل":
+
         await update.message.reply_text(
             profile_text(user_id)
         )
 
+
     elif text == "🏆 رتبه‌بندی":
+
         await update.message.reply_text(
-            "🏆 این بخش به‌زودی فعال می‌شود."
+            ranking_text()
         )
+
 
     elif text == "⭐ VIP":
+
         await update.message.reply_text(
-            "⭐ بخش VIP به‌زودی فعال می‌شود."
+            "⭐ بخش VIP\n\n"
+            "به‌زودی فعال می‌شود."
         )
+
 
     elif text == "🎁 دعوت دوستان":
+
         await update.message.reply_text(
-            "🎁 این بخش به‌زودی فعال می‌شود."
+            "🎁 بخش دعوت دوستان\n\n"
+            "به‌زودی فعال می‌شود."
         )
 
+
     else:
+
         if check_answer(user_id, text):
 
             reward = open_treasure(user_id)
 
             await update.message.reply_text(
-                f"🎉 جواب درست بود!\n\n🎁 {reward} امتیاز گرفتی."
+                f"🎉 جواب درست بود!\n"
+                f"🎁 {reward} امتیاز گرفتی."
             )
 
         else:
+
             await update.message.reply_text(
-                "❌ جواب اشتباه است."
+                "❌ جواب درست نیست، دوباره تلاش کن."
             )
 
 
 app = Application.builder().token(TOKEN).build()
+
 
 app.add_handler(
     CommandHandler(
@@ -94,11 +114,13 @@ app.add_handler(
     )
 )
 
+
 app.add_handler(
     MessageHandler(
         filters.TEXT & ~filters.COMMAND,
-        message
+        button_handler
     )
 )
+
 
 app.run_polling()
