@@ -1,14 +1,9 @@
-import random
+from database import add_score
 
 
-treasures = [
-    {"name": "🪙 ۱۰ سکه", "coins": 10},
-    {"name": "🪙 ۵۰ سکه", "coins": 50},
-    {"name": "💎 گنج کوچک", "coins": 100},
-    {"name": "❌ صندوق خالی", "coins": 0},
-    {"name": "👑 گنج افسانه‌ای", "coins": 500}
-]
+def open_treasure(user_id):
+    reward = 10
 
+    add_score(user_id, reward)
 
-def open_treasure():
-    return random.choice(treasures)
+    return reward
