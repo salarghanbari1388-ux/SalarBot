@@ -205,7 +205,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             f"👥 دعوت موفق: {count}"
 
-)async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+)
+        async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if context.user_data.get("vip_request"):
 
