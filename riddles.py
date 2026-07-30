@@ -1,20 +1,14 @@
-import random
-
 riddles = [
     {
-        "question": "آن چیست که هرچه بیشتر از آن برداری، بزرگ‌تر می‌شود؟",
-        "answer": "چاله"
+        "question": "آن چیست که همیشه بالا می‌رود اما پایین نمی‌آید؟",
+        "answer": "سن"
     },
     {
-        "question": "چه چیزی سر دارد ولی بدن ندارد؟",
-        "answer": "سکه"
-    },
-    {
-        "question": "چه چیزی همیشه جلوی توست ولی نمی‌توانی آن را ببینی؟",
-        "answer": "آینده"
+        "question": "آن چیست که دهان دارد ولی غذا نمی‌خورد؟",
+        "answer": "رود"
     }
 ]
 
 
 def get_riddle():
-    return random.choice(riddles)
+    return riddles[0]
