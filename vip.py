@@ -1,42 +1,100 @@
-from datetime import datetime
+# vip.py
 
-# ذخیره اطلاعات کاربران
-users = {}
+from datetime import datetime, timedelta
+
+
+vip_users = {}
+
+free_questions = {}
+
+vip_requests = []
+
+
+FREE_LIMIT = 3
+
 
 
 def is_vip(user_id):
-    """بررسی می‌کند کاربر VIP است یا نه"""
-    if user_id not in users:
-        return False
 
-    expire = users[user_id].get("vip_until")
+    if user_id in vip_users:
 
-    if expire is None:
-        return False
+        if datetime.now() < vip_users[user_id]:
+            return True
 
-    return expire > datetime.now()
+        del vip_users[user_id]
+
+    return False
 
 
-def activate_vip(user_id, days=7):
-    """فعال کردن VIP"""
-    users.setdefault(user_id, {})
-    users[user_id]["vip_until"] = datetime.now().replace(
-        hour=23, minute=59, second=59
-    )
+
+def activate_vip(user_id):
+
+    vip_users[user_id] = datetime.now() + timedelta(days=7)
+
 
 
 def use_free_question(user_id):
-    """۳ سؤال رایگان در روز"""
-    today = datetime.now().strftime("%Y-%m-%d")
 
-    users.setdefault(user_id, {})
+    today = datetime.now().date()
 
-    if users[user_id].get("date") != today:
-        users[user_id]["date"] = today
-        users[user_id]["count"] = 0
 
-    if users[user_id]["count"] >= 3:
-        return False
+    if user_id not in free_questions:
 
-    users[user_id]["count"] += 1
-    return True
+        free_questions[user_id] = {
+            "count": FREE_LIMIT,
+            "date": today
+        }
+
+
+    data = free_questions[user_id]
+
+
+    if data["date"] != today:
+
+        data["count"] = FREE_LIMIT
+        data["date"] = today
+
+
+    if data["count"] > 0:
+
+        data["count"] -= 1
+        return True
+
+
+    return False
+
+
+
+def add_vip_request(user_id, photo_id):
+
+    vip_requests.append({
+
+        "user_id": user_id,
+        "photo": photo_id,
+        "status": "pending"
+
+    })
+
+
+
+def get_vip_requests():
+
+    return vip_requests
+
+
+
+def approve_vip(index):
+
+    request = vip_requests[index]
+
+    activate_vip(
+        request["user_id"]
+    )
+
+    request["status"] = "approved"
+
+
+
+def reject_vip(index):
+
+    vip_requests[index]["status"] = "rejected"
