@@ -1,17 +1,16 @@
-import sqlite3
+from database import get_user
 
-def get_profile(user_id):
-    conn = sqlite3.connect("data.db")
-    cursor = conn.cursor()
 
-    cursor.execute("""
-        SELECT username, coins, level, vip
-        FROM users
-        WHERE user_id = ?
-    """, (user_id,))
+def profile_text(user_id):
+    user = get_user(user_id)
 
-    user = cursor.fetchone()
+    if user is None:
+        return "کاربر پیدا نشد."
 
-    conn.close()
+    vip = "⭐ دارد" if user["vip"] else "❌ ندارد"
 
-    return user
+    return (
+        f"👤 نام: {user['username']}\n"
+        f"🏆 امتیاز: {user['score']}\n"
+        f"💎 VIP: {vip}"
+    )
