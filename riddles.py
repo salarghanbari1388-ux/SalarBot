@@ -1,14 +1,13 @@
-riddles = [
-    {
-        "question": "آن چیست که همیشه بالا می‌رود اما پایین نمی‌آید؟",
-        "answer": "سن"
-    },
-    {
-        "question": "آن چیست که دهان دارد ولی غذا نمی‌خورد؟",
-        "answer": "رود"
-    }
-]
+from questions import questions
+import random
 
 
 def get_riddle():
-    return riddles[0]
+    riddle = random.choice(questions)
+
+    return {
+        "id": riddle["id"],
+        "question": riddle["question"],
+        "answer": riddle["answer"],
+        "level": riddle["level"]
+    }
