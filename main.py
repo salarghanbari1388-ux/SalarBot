@@ -1,0 +1,1 @@
+print("SalarBot is starting...")
