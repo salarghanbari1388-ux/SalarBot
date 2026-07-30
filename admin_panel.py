@@ -1,33 +1,41 @@
 # admin_panel.py
 
+
 from telegram import (
-    Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup
 )
 
 from telegram.ext import (
-    ContextTypes,
-    CallbackQueryHandler,
-    CommandHandler
+    CommandHandler,
+    CallbackQueryHandler
 )
 
 
-# آیدی ادمین
+from vip import (
+    get_vip_requests,
+    approve_vip,
+    reject_vip
+)
+
+
+from support import get_support_messages
+
+
+from referrals import top_referrers
+
+
+from rewards import current_prize, days_left
+
+
+
 ADMIN_ID = 8646600079
 
 
 
-# =========================
-# نمایش پنل ادمین
-# =========================
-
-async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def admin_panel(update, context):
 
     if update.effective_user.id != ADMIN_ID:
-        await update.message.reply_text(
-            "⛔ شما ادمین نیستید"
-        )
         return
 
 
@@ -35,43 +43,36 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         [
             InlineKeyboardButton(
-                "📊 آمار ربات",
-                callback_data="admin_stats"
+                "📊 آمار",
+                callback_data="stats"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "👑 درخواست VIP",
-                callback_data="vip_list"
+                "👑 VIP",
+                callback_data="vip"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "💳 پرداخت‌ها",
-                callback_data="payment_list"
+                "🎧 پشتیبانی",
+                callback_data="support"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "📢 پیام همگانی",
-                callback_data="broadcast"
+                "🎁 دعوت‌ها",
+                callback_data="refs"
             )
         ],
 
         [
             InlineKeyboardButton(
-                "❓ مدیریت سوالات",
-                callback_data="questions"
-            )
-        ],
-
-        [
-            InlineKeyboardButton(
-                "⚙ تنظیمات",
-                callback_data="settings"
+                "🏆 جایزه",
+                callback_data="reward"
             )
         ]
 
@@ -79,18 +80,13 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
     await update.message.reply_text(
-        "👑 پنل مدیریت SalarBot\n\n"
-        "یک گزینه را انتخاب کنید:",
+        "👑 پنل مدیریت SalarBot",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
 
 
-# =========================
-# دکمه های پنل
-# =========================
-
-async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def admin_buttons(update, context):
 
     query = update.callback_query
 
@@ -102,144 +98,81 @@ async def admin_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
-    # آمار
+    if query.data == "stats":
 
-    if query.data == "admin_stats":
+        await query.edit_message_text(
+            "📊 آمار\n\n"
+            "کاربران: بعداً از دیتابیس"
+        )
 
-        text = """
-📊 آمار SalarBot
 
-👤 کاربران: 0
-👑 کاربران VIP: 0
-❓ تعداد سوالات: 0
-💰 درآمد: 0 تومان
 
-(اتصال به دیتابیس بعداً)
-"""
+    elif query.data == "vip":
+
+        requests = get_vip_requests()
+
+
+        if not requests:
+
+            await query.edit_message_text(
+                "👑 درخواست VIP وجود ندارد"
+            )
+
+            return
+
+
+        text = "👑 درخواست‌های VIP:\n\n"
+
+
+        for i,r in enumerate(requests):
+
+            text += (
+                f"{i+1}) "
+                f"کاربر {r['user_id']} "
+                f"- {r['status']}\n"
+            )
+
 
         await query.edit_message_text(text)
 
 
 
-    # لیست VIP
+    elif query.data == "support":
 
-    elif query.data == "vip_list":
+        msgs = get_support_messages()
 
-        text = """
-👑 درخواست‌های VIP
-
-درخواستی وجود ندارد.
-
-در این قسمت:
-✅ تایید VIP
-❌ رد درخواست
-
-نمایش داده می‌شود.
-"""
-
-        await query.edit_message_text(text)
-
-
-
-    # پرداخت‌ها
-
-    elif query.data == "payment_list":
-
-        text = """
-💳 پرداخت‌ها
-
-لیست کارت به کارت‌ها:
-
-فعلاً خالی است.
-
-بعد از اتصال دیتابیس:
-نام کاربر
-مبلغ
-عکس رسید
-وضعیت پرداخت
-نمایش داده می‌شود.
-"""
-
-        await query.edit_message_text(text)
-
-
-
-    # پیام همگانی
-
-    elif query.data == "broadcast":
 
         await query.edit_message_text(
-            "📢 برای ارسال پیام همگانی:\n"
-            "/broadcast متن پیام"
+            f"🎧 پیام‌های پشتیبانی: {len(msgs)}"
         )
 
 
 
-    # سوالات
+    elif query.data == "refs":
 
-    elif query.data == "questions":
+        top = top_referrers()
+
 
         await query.edit_message_text(
-            "❓ مدیریت سوالات\n\n"
-            "/addquestion\n"
-            "اضافه کردن سوال جدید"
+            f"🎁 نفرات برتر دعوت:\n{top[:5]}"
         )
 
 
 
-    # تنظیمات
-
-    elif query.data == "settings":
+    elif query.data == "reward":
 
         await query.edit_message_text(
-            "⚙ تنظیمات ربات\n\n"
-            "قیمت VIP\n"
-            "تعداد سوال رایگان\n"
-            "تنظیمات بانک سوال"
+            "🏆 مسابقه\n\n"
+            f"💰 جایزه فعلی: {current_prize()} تومان\n"
+            f"⏳ زمان باقی‌مانده: {days_left()} روز"
         )
 
 
 
 
+def setup_admin(app):
 
-# =========================
-# ارسال پیام همگانی
-# =========================
-
-async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    if update.effective_user.id != ADMIN_ID:
-        return
-
-
-    message = " ".join(context.args)
-
-
-    if not message:
-        await update.message.reply_text(
-            "مثال:\n"
-            "/broadcast سلام کاربران"
-        )
-        return
-
-
-    # اینجا لیست کاربران از دیتابیس خوانده می‌شود
-
-    await update.message.reply_text(
-        "✅ پیام برای کاربران ارسال شد"
-    )
-
-
-
-
-
-# =========================
-# اضافه کردن هندلرها به ربات
-# =========================
-
-def setup_admin(application):
-
-    application.add_handler(
+    app.add_handler(
         CommandHandler(
             "admin",
             admin_panel
@@ -247,16 +180,8 @@ def setup_admin(application):
     )
 
 
-    application.add_handler(
-        CommandHandler(
-            "broadcast",
-            broadcast
-        )
-    )
-
-
-    application.add_handler(
+    app.add_handler(
         CallbackQueryHandler(
             admin_buttons
         )
-)
+    )
