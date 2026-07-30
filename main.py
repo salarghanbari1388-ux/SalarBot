@@ -62,6 +62,5 @@ await update.message.reply_text(
 app = Application.builder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, button_handler))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, check_riddle_answer))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, button_handler)) 
 app.run_polling()
