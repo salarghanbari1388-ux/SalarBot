@@ -1,14 +1,12 @@
-active_riddles = {}
+current_answers = {}
 
 
-def save_riddle(user_id, answer):
-    active_riddles[user_id] = answer
+def save_answer(user_id, answer):
+    current_answers[user_id] = answer
 
 
-def check_answer(user_id, answer):
-    correct = active_riddles.get(user_id)
+def check_answer(user_id, text):
+    if user_id not in current_answers:
+        return False
 
-    if correct and answer.strip() == correct:
-        return True
-
-    return False
+    return text.strip() == current_answers[user_id]
