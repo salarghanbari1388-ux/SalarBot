@@ -16,7 +16,7 @@ from ranking import ranking_text
 from riddles import get_riddle
 from answers import save_answer, check_answer
 from treasure import open_treasure
-
+from vip import is_vip, use_free_question
 
 TOKEN = os.getenv("BOT_TOKEN")
 
@@ -39,42 +39,40 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     user_id = update.effective_user.id
 
+    if text == "🎮 شروع بازی":
 
-    i
+        if not is_vip(user_id):
+            if not use_free_question(user_id):
+                await update.message.reply_text(
+                    "⛔ سهمیه رایگان امروزت تمام شده.\n\n"
+                    "⭐ برای ادامه بازی VIP بگیر."
+                )
+                return
+
+        riddle = get_riddle()
+
+        save_answer(
+            user_id,
+            riddle["answer"]
+        )
+
+        await update.message.reply_text(
+            "🧩 معما:\n\n"
+            + riddle["question"]
+            + "\n\nجوابت رو بفرست."
+        )
+
     elif text == "👤 پروفایل":
 
         await update.message.reply_text(
             profile_text(user_id)
         )
-if text == "🎮 شروع بازی":
-
-    if not is_vip(user_id):
-        if not use_free_question(user_id):
-            await update.message.reply_text(
-                "⛔ سهمیه رایگان امروزت تمام شده.\n\n"
-                "⭐ برای ادامه بازی VIP بگیر."
-            )
-            return
-
-    riddle = get_riddle()
-
-    save_answer(
-        user_id,
-        riddle["answer"]
-    )
-
-    await update.message.reply_text(
-        "🧩 معما:\n\n"
-        + riddle["question"]
-        + "\n\nجوابت رو بفرست."
-    )
 
     elif text == "🏆 رتبه‌بندی":
 
         await update.message.reply_text(
             ranking_text()
         )
-
 
     elif text == "⭐ VIP":
 
@@ -83,14 +81,12 @@ if text == "🎮 شروع بازی":
             "به‌زودی فعال می‌شود."
         )
 
-
     elif text == "🎁 دعوت دوستان":
 
         await update.message.reply_text(
             "🎁 بخش دعوت دوستان\n\n"
             "به‌زودی فعال می‌شود."
         )
-
 
     else:
 
@@ -112,14 +108,7 @@ if text == "🎮 شروع بازی":
 
 app = Application.builder().token(TOKEN).build()
 
-
-app.add_handler(
-    CommandHandler(
-        "start",
-        start
-    )
-)
-
+app.add_handler(CommandHandler("start", start))
 
 app.add_handler(
     MessageHandler(
@@ -127,6 +116,5 @@ app.add_handler(
         button_handler
     )
 )
-
 
 app.run_polling()
