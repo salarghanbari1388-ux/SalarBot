@@ -40,28 +40,34 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
 
 
-    if text == "🎮 شروع بازی":
-
-        riddle = get_riddle()
-
-        save_answer(
-            user_id,
-            riddle["answer"]
-        )
-
-        await update.message.reply_text(
-            "🧩 معما:\n\n"
-            + riddle["question"]
-            + "\n\nجوابت رو بفرست."
-        )
-
-
+    i
     elif text == "👤 پروفایل":
 
         await update.message.reply_text(
             profile_text(user_id)
         )
+if text == "🎮 شروع بازی":
 
+    if not is_vip(user_id):
+        if not use_free_question(user_id):
+            await update.message.reply_text(
+                "⛔ سهمیه رایگان امروزت تمام شده.\n\n"
+                "⭐ برای ادامه بازی VIP بگیر."
+            )
+            return
+
+    riddle = get_riddle()
+
+    save_answer(
+        user_id,
+        riddle["answer"]
+    )
+
+    await update.message.reply_text(
+        "🧩 معما:\n\n"
+        + riddle["question"]
+        + "\n\nجوابت رو بفرست."
+    )
 
     elif text == "🏆 رتبه‌بندی":
 
