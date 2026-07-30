@@ -71,11 +71,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=main_menu()
     )
     
-    async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def button_handler(update:
+                    Update, context:
+        :ContextTypes.DEFAULT_TYPE)
 
     text = update.message.text
 
-    user_id = update.effective_user.id
+user_id = update.effective_user.id
 
 
     if text == "🎮 شروع بازی":
