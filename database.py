@@ -1,17 +1,19 @@
-import sqlite3
+users = {}
 
-conn = sqlite3.connect("data.db")
-cursor = conn.cursor()
 
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS users (
-    user_id INTEGER PRIMARY KEY,
-    username TEXT,
-    coins INTEGER DEFAULT 0,
-    level INTEGER DEFAULT 1,
-    vip INTEGER DEFAULT 0
-)
-""")
+def add_user(user_id, username):
+    if user_id not in users:
+        users[user_id] = {
+            "username": username,
+            "score": 0,
+            "vip": False
+        }
 
-conn.commit()
-conn.close()
+
+def get_user(user_id):
+    return users.get(user_id)
+
+
+def add_score(user_id, points):
+    if user_id in users:
+        users[user_id]["score"] += points
