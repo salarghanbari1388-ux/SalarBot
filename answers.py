@@ -1,3 +1,6 @@
+from database import add_score
+
+
 current_answers = {}
 
 
@@ -9,4 +12,11 @@ def check_answer(user_id, text):
     if user_id not in current_answers:
         return False
 
-    return text.strip() == current_answers[user_id]
+    correct = current_answers[user_id]
+
+    if text.strip() == correct:
+        add_score(user_id, 10)
+        del current_answers[user_id]
+        return True
+
+    return False
