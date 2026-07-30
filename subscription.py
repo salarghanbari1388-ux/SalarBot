@@ -1,39 +1,13 @@
-from datetime import datetime, timedelta
+from database import users
 
 
-subscriptions = {}
+def activate_vip(user_id):
+    if user_id in users:
+        users[user_id]["vip"] = True
 
 
-def buy_subscription(user_id):
-    expire_date = datetime.now() + timedelta(days=30)
-
-    subscriptions[user_id] = {
-        "vip": True,
-        "expire": expire_date
-    }
-
-    return expire_date
-
-
-def check_subscription(user_id):
-    user = subscriptions.get(user_id)
-
-    if not user:
+def is_vip(user_id):
+    if user_id not in users:
         return False
 
-    if datetime.now() < user["expire"]:
-        return True
-
-    return False
-
-
-def subscription_info(user_id):
-    user = subscriptions.get(user_id)
-
-    if not user:
-        return "❌ اشتراک فعال نداری."
-
-    return (
-        "⭐ اشتراک VIP فعال است\n"
-        f"📅 پایان: {user['expire'].strftime('%Y-%m-%d')}"
-  )
+    return users[user_id]["vip"]
