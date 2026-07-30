@@ -1,6 +1,15 @@
+import os
 import time
+from telegram import Update
+from telegram.ext import Application, CommandHandler, ContextTypes
 
-print("SalarBot is running")
+TOKEN = os.getenv("BOT_TOKEN")
 
-while True:
-    time.sleep(60)
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("سلام! ربات سالار آماده است 🤖")
+
+app = Application.builder().token(TOKEN).build()
+
+app.add_handler(CommandHandler("start", start))
+
+app.run_polling()
