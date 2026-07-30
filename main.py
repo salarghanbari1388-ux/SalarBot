@@ -49,11 +49,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user.username or user.first_name
     )
 
-
     if context.args:
-
         try:
-
             inviter_id = int(context.args[0])
 
             add_referral(
@@ -62,10 +59,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
         except:
-
             pass
 
-
+    await update.message.reply_text(
+        "🏺 به بازی شکار گنج خوش آمدی!",
+        reply_markup=main_menu()
+    )
     await update.message.reply_text(
         "🏺 به بازی شکار گنج خوش آمدی!",
         reply_markup=main_menu()
