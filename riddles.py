@@ -1,13 +1,31 @@
-from questions import questions
-import random
-
-
-def get_riddle():
-    riddle = random.choice(questions)
-
-    return {
-        "id": riddle["id"],
-        "question": riddle["question"],
-        "answer": riddle["answer"],
-        "level": riddle["level"]
-    }
+{"question": "بلندترین کوه جهان چیست؟", "answer": "اورست"},
+{"question": "پایتخت کانادا چیست؟", "answer": "اتاوا"},
+{"question": "کدام سیاره به سیاره سرخ معروف است؟", "answer": "مریخ"},
+{"question": "اولین انسان روی ماه چه کسی بود؟", "answer": "نیل آرمسترانگ"},
+{"question": "بزرگ‌ترین اقیانوس جهان چیست؟", "answer": "آرام"},
+{"question": "نماد شیمیایی طلا چیست؟", "answer": "Au"},
+{"question": "نماد شیمیایی نقره چیست؟", "answer": "Ag"},
+{"question": "رود نیل در کدام قاره قرار دارد؟", "answer": "آفریقا"},
+{"question": "پایتخت برزیل چیست؟", "answer": "برازیلیا"},
+{"question": "بزرگ‌ترین کشور جهان چیست؟", "answer": "روسیه"},
+{"question": "۷×۸ چند می‌شود؟", "answer": "56"},
+{"question": "۱۵² چند است؟", "answer": "225"},
+{"question": "ریشه دوم ۱۴۴ چیست؟", "answer": "12"},
+{"question": "اگر ساعت ۳ باشد، ۵ ساعت بعد چند است؟", "answer": "8"},
+{"question": "۳۶ تقسیم بر ۶؟", "answer": "6"},
+{"question": "سریع‌ترین حیوان خشکی چیست؟", "answer": "یوزپلنگ"},
+{"question": "بزرگ‌ترین پستاندار جهان چیست؟", "answer": "نهنگ آبی"},
+{"question": "طولانی‌ترین رود جهان چیست؟", "answer": "نیل"},
+{"question": "پایتخت استرالیا چیست؟", "answer": "کانبرا"},
+{"question": "واحد اندازه‌گیری شدت جریان برق چیست؟", "answer": "آمپر"},
+...
+{"question": "کدام فلز بیشترین رسانایی الکتریکی را دارد؟", "answer": "نقره"},
+{"question": "اولین ماه سال شمسی چیست؟", "answer": "فروردین"},
+{"question": "تعداد ضلع‌های شش‌ضلعی چند است؟", "answer": "6"},
+{"question": "قاره اروپا چند کشور دارد؟", "answer": "44"},
+{"question": "کدام عنصر با نماد Fe شناخته می‌شود؟", "answer": "آهن"},
+{"question": "پایتخت آرژانتین چیست؟", "answer": "بوئنوس آیرس"},
+{"question": "قدیمی‌ترین دانشگاه جهان که هنوز فعال است چیست؟", "answer": "القرویین"},
+{"question": "سخت‌ترین ماده طبیعی جهان چیست؟", "answer": "الماس"},
+{"question": "بزرگ‌ترین بیابان گرم جهان چیست؟", "answer": "صحرا"},
+{"question": "عدد اول بعد از ۹۷ چیست؟", "answer": "101"}
