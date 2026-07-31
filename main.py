@@ -1,4 +1,5 @@
 import os
+import sys
 import threading
 import asyncio
 from flask import Flask, jsonify
@@ -11,30 +12,38 @@ from telegram.ext import (
     filters
 )
 
-from menu import main_menu
-from game import register_user
-from profile import profile_text
-from ranking import ranking_text
-from riddles import get_riddle
-from answers import save_answer, check_answer
-from treasure import open_treasure
-from vip import (
-    is_vip,
-    use_free_question,
-    add_vip_request
-)
-from referrals import (
-    add_referral,
-    get_referrals,
-    referral_link
-)
-from support import add_support_message
-from admin_panel import setup_admin
+# ====== بررسی وجود ماژول‌های داخلی ======
+try:
+    from menu import main_menu
+    from game import register_user
+    from profile import profile_text
+    from ranking import ranking_text
+    from riddles import get_riddle
+    from answers import save_answer, check_answer
+    from treasure import open_treasure
+    from vip import (
+        is_vip,
+        use_free_question,
+        add_vip_request
+    )
+    from referrals import (
+        add_referral,
+        get_referrals,
+        referral_link
+    )
+    from support import add_support_message
+    from admin_panel import setup_admin
+except ImportError as e:
+    print(f"❌ خطا در import ماژول: {e}")
+    sys.exit(1)
 
 # ========== تنظیمات اولیه ==========
 TOKEN = os.getenv("BOT_TOKEN")
 if not TOKEN:
-    raise ValueError("BOT_TOKEN تنظیم نشده!")
+    print("❌ متغیر محیطی BOT_TOKEN تنظیم نشده!")
+    sys.exit(1)
+
+ADMIN_ID = 8646600079  # آیدی عددی خودت - با @userinfobot بگیر
 
 # ========== سرور Flask ==========
 flask_app = Flask(__name__)
@@ -127,7 +136,7 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         add_vip_request(update.effective_user.id, photo)
 
         await context.bot.send_photo(
-            chat_id=8646600079,  # ADMIN_ID
+            chat_id=ADMIN_ID,
             photo=photo,
             caption=f"💳 رسید VIP جدید\n\n👤 کاربر: {update.effective_user.id}\n⏳ منتظر بررسی"
         )
@@ -146,7 +155,7 @@ async def main():
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler))
     setup_admin(application)
 
-    # ====== پاک‌سازی کامل Webhook ======
+    # حذف Webhook قبلی (برای جلوگیری از Conflict)
     print("🔄 در حال پاک‌سازی Webhook قبلی...")
     try:
         await application.bot.delete_webhook(drop_pending_updates=True)
@@ -154,16 +163,16 @@ async def main():
     except Exception as e:
         print(f"⚠️ خطا در حذف Webhook: {e}")
 
-    # ====== اجرای Flask در ترد جداگانه ======
+    # اجرای Flask در ترد جداگانه
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
     print(f"🚀 سرور HTTP روی پورت {os.getenv('PORT', 8080)} راه افتاد.")
 
-    # ====== شروع Polling با تنظیمات مقاوم ======
+    # شروع Polling
     print("🤖 ربات با Polling شروع به کار کرد...")
     await application.run_polling(
         drop_pending_updates=True,
-        allowed_updates=["message", "callback_query"]  # فقط انواع مورد نیاز
+        allowed_updates=["message", "callback_query"]
     )
 
 if __name__ == "__main__":
