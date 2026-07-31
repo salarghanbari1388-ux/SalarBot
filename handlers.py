@@ -1,6 +1,5 @@
-from telegram import Update
+from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ContextTypes
-from keyboards import main_menu
 from database import add_user, get_user, add_score
 from vip_manager import is_vip, use_free_question, add_vip_request
 from riddles import get_riddle
@@ -11,6 +10,17 @@ from rewards import current_prize, days_left
 from config import VIP_PRICE, CARD_NUMBER
 from treasure import open_treasure
 
+# ========== کیبورد منو (همون که قبلاً توی keyboards.py بود) ==========
+def main_menu():
+    keyboard = [
+        ["🎮 شروع بازی"],
+        ["👤 پروفایل", "🏆 رتبه‌بندی"],
+        ["⭐ VIP", "🎁 دعوت دوستان"],
+        ["🎧 پشتیبانی"]
+    ]
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
+# ========== هندلرها ==========
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     add_user(user.id, user.username or user.first_name)
