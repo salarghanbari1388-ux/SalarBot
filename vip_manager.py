@@ -49,4 +49,4 @@ def approve_vip(index):
 
 def reject_vip(index):
     if 0 <= index < len(vip_requests):
-      vip_requests[index]["status"] = "rejected"
+        vip_requests[index]["status"] = "rejected"
