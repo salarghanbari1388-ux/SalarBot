@@ -1,0 +1,18 @@
+from aiogram import Router, F, types
+import database as db
+from config import ADMIN_IDS
+
+router = Router()
+
+@router.message(F.text == "🏆 جشنواره")
+async def contest_info(message: types.Message):
+    first = int(db.get_setting("contest_first_prize") or 200000)
+    second = int(db.get_setting("contest_second_prize") or 100000)
+    # محاسبه افزایش جایزه بر اساس تعداد موضوعات (مثلاً ۶۰ موضوع جدید)
+    # برای نمونه از یک عدد ثابت استفاده می‌کنیم
+    await message.answer(
+        f"🏆 جشنواره دو هفته‌ای\n"
+        f"جایزه اول: {first:,} تومان\n"
+        f"جایزه دوم: {second:,} تومان\n\n"
+        "به ازای هر ۶۰ موضوع جدید، مبلغ جوایز افزایش می‌یابد."
+    )
