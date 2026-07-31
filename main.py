@@ -1,6 +1,7 @@
 import os
 import threading
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
+from waitress import serve
 from telegram import Update
 from telegram.ext import (
     Application,
@@ -30,25 +31,49 @@ from referrals import (
 from support import add_support_message
 from admin_panel import setup_admin
 
+# ========== تنظیمات اولیه ==========
 TOKEN = os.getenv("BOT_TOKEN")
 BOT_USERNAME = "SalarPlay137Bot"
 ADMIN_ID = 8646600079
 
-# ========== راه‌اندازی سرور Flask برای Health Check ==========
-app = Flask(__name__)
+# URL رندر (این رو توی متغیر محیطی RENDER_EXTERNAL_URL بذار)
+WEBHOOK_URL = os.getenv("RENDER_EXTERNAL_URL", "https://salarbot.onrender.com")
 
-@app.route('/')
-@app.route('/health')
+if not TOKEN:
+    raise ValueError("BOT_TOKEN تنظیم نشده!")
+
+# ========== ساخت برنامه تلگرام (سراسری) ==========
+application = Application.builder().token(TOKEN).build()
+
+# ========== سرور Flask ==========
+flask_app = Flask(__name__)
+
+@flask_app.route('/')
+@flask_app.route('/health')
 def health_check():
     return jsonify({"status": "ok"}), 200
 
+@flask_app.route('/webhook', methods=['POST'])
+async def webhook():
+    """دریافت آپدیت از تلگرام"""
+    if request.headers.get('content-type') != 'application/json':
+        return "Unsupported Media Type", 415
+
+    json_data = request.get_json()
+    if not json_data:
+        return "Bad Request", 400
+
+    update = Update.de_json(json_data, application.bot)
+    await application.process_update(update)
+    return "OK", 200
+
 def run_flask():
     port = int(os.getenv("PORT", 8080))
-    # host=0.0.0.0 برای دسترسی از بیرون (رندر نیاز داره)
-    app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
+    serve(flask_app, host='0.0.0.0', port=port)
 
-# ============================================================
+# ==========================================
 
+# ========== توابع ربات ==========
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     register_user(
@@ -153,25 +178,34 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         context.user_data["vip_request"] = False
 
+# ==========================================
 
+# ========== تنظیم Webhook ==========
+def setup_webhook():
+    webhook_url = f"{WEBHOOK_URL}/webhook"
+    application.bot.set_webhook(webhook_url)
+    print(f"✅ Webhook تنظیم شد: {webhook_url}")
+
+# ========== تابع اصلی ==========
 def main():
-    # ۱. اجرای سرور Flask در یک ترد جداگانه
-    flask_thread = threading.Thread(target=run_flask, daemon=True)
-    flask_thread.start()
-    print("✅ سرور HTTP روی پورت", os.getenv("PORT", 8080), "راه افتاد.")
-
-    # ۲. ساخت و اجرای ربات
-    application = Application.builder().token(TOKEN).build()
-
+    # اضافه کردن هندلرها به اپلیکیشن
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.PHOTO, photo_handler))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler))
 
+    # تنظیم پنل ادمین (اگر تابع setup_admin هندلر اضافه میکنه)
     setup_admin(application)
 
-    print("🤖 ربات شروع به کار کرد...")
-    application.run_polling()
+    # تنظیم Webhook
+    setup_webhook()
 
+    # اجرای سرور Flask در یک ترد جداگانه
+    flask_thread = threading.Thread(target=run_flask, daemon=True)
+    flask_thread.start()
+    print(f"🚀 سرور HTTP روی پورت {os.getenv('PORT', 8080)} راه افتاد.")
+
+    # نگه داشتن برنامه (با انتظار برای تردها)
+    flask_thread.join()
 
 if __name__ == "__main__":
     main()
