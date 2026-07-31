@@ -1,7 +1,6 @@
 import os
 import threading
 from flask import Flask, jsonify, request
-from waitress import serve
 from telegram import Update
 from telegram.ext import (
     Application,
@@ -35,14 +34,12 @@ from admin_panel import setup_admin
 TOKEN = os.getenv("BOT_TOKEN")
 BOT_USERNAME = "SalarPlay137Bot"
 ADMIN_ID = 8646600079
-
-# URL رندر (این رو توی متغیر محیطی RENDER_EXTERNAL_URL بذار)
 WEBHOOK_URL = os.getenv("RENDER_EXTERNAL_URL", "https://salarbot.onrender.com")
 
 if not TOKEN:
     raise ValueError("BOT_TOKEN تنظیم نشده!")
 
-# ========== ساخت برنامه تلگرام (سراسری) ==========
+# ========== ساخت برنامه تلگرام ==========
 application = Application.builder().token(TOKEN).build()
 
 # ========== سرور Flask ==========
@@ -55,7 +52,6 @@ def health_check():
 
 @flask_app.route('/webhook', methods=['POST'])
 async def webhook():
-    """دریافت آپدیت از تلگرام"""
     if request.headers.get('content-type') != 'application/json':
         return "Unsupported Media Type", 415
 
@@ -69,11 +65,12 @@ async def webhook():
 
 def run_flask():
     port = int(os.getenv("PORT", 8080))
-    serve(flask_app, host='0.0.0.0', port=port)
+    # استفاده از سرور داخلی Flask (با غیرفعال کردن debug و reloader)
+    flask_app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
 
 # ==========================================
 
-# ========== توابع ربات ==========
+# ========== توابع ربات (بدون تغییر) ==========
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     register_user(
@@ -188,23 +185,21 @@ def setup_webhook():
 
 # ========== تابع اصلی ==========
 def main():
-    # اضافه کردن هندلرها به اپلیکیشن
+    # اضافه کردن هندلرها
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.PHOTO, photo_handler))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler))
-
-    # تنظیم پنل ادمین (اگر تابع setup_admin هندلر اضافه میکنه)
     setup_admin(application)
 
     # تنظیم Webhook
     setup_webhook()
 
-    # اجرای سرور Flask در یک ترد جداگانه
+    # اجرای Flask در ترد جداگانه
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
     print(f"🚀 سرور HTTP روی پورت {os.getenv('PORT', 8080)} راه افتاد.")
 
-    # نگه داشتن برنامه (با انتظار برای تردها)
+    # نگه داشتن برنامه
     flask_thread.join()
 
 if __name__ == "__main__":
