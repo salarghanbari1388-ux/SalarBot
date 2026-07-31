@@ -1,6 +1,6 @@
 import os
 import threading
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify
 from telegram import Update
 from telegram.ext import (
     Application,
@@ -34,15 +34,11 @@ from admin_panel import setup_admin
 TOKEN = os.getenv("BOT_TOKEN")
 BOT_USERNAME = "SalarPlay137Bot"
 ADMIN_ID = 8646600079
-WEBHOOK_URL = os.getenv("RENDER_EXTERNAL_URL", "https://salarbot.onrender.com")
 
 if not TOKEN:
     raise ValueError("BOT_TOKEN تنظیم نشده!")
 
-# ========== ساخت برنامه تلگرام ==========
-application = Application.builder().token(TOKEN).build()
-
-# ========== سرور Flask ==========
+# ========== سرور Flask برای Health Check ==========
 flask_app = Flask(__name__)
 
 @flask_app.route('/')
@@ -50,22 +46,8 @@ flask_app = Flask(__name__)
 def health_check():
     return jsonify({"status": "ok"}), 200
 
-@flask_app.route('/webhook', methods=['POST'])
-async def webhook():
-    if request.headers.get('content-type') != 'application/json':
-        return "Unsupported Media Type", 415
-
-    json_data = request.get_json()
-    if not json_data:
-        return "Bad Request", 400
-
-    update = Update.de_json(json_data, application.bot)
-    await application.process_update(update)
-    return "OK", 200
-
 def run_flask():
     port = int(os.getenv("PORT", 8080))
-    # استفاده از سرور داخلی Flask (با غیرفعال کردن debug و reloader)
     flask_app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
 
 # ==========================================
@@ -177,30 +159,29 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ==========================================
 
-# ========== تنظیم Webhook ==========
-def setup_webhook():
-    webhook_url = f"{WEBHOOK_URL}/webhook"
-    application.bot.set_webhook(webhook_url)
-    print(f"✅ Webhook تنظیم شد: {webhook_url}")
-
 # ========== تابع اصلی ==========
 def main():
+    # ساخت اپلیکیشن
+    application = Application.builder().token(TOKEN).build()
+
     # اضافه کردن هندلرها
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.PHOTO, photo_handler))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler))
     setup_admin(application)
 
-    # تنظیم Webhook
-    setup_webhook()
+    # حذف webhook قبلی (اگر وجود داشته باشد)
+    application.bot.delete_webhook(drop_pending_updates=True)
+    print("✅ Webhook قبلی حذف شد.")
 
     # اجرای Flask در ترد جداگانه
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
     print(f"🚀 سرور HTTP روی پورت {os.getenv('PORT', 8080)} راه افتاد.")
 
-    # نگه داشتن برنامه
-    flask_thread.join()
+    # اجرای Polling (با drop_pending_updates=True برای جلوگیری از Conflict)
+    print("🤖 ربات با Polling شروع به کار کرد...")
+    application.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
     main()
