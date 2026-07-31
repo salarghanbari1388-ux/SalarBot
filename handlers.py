@@ -5,12 +5,10 @@ from vip_manager import is_vip, use_free_question, add_vip_request
 from riddles import get_riddle
 from profile import profile_text
 from ranking import ranking_text
-from referral import add_referral, get_referrals, referral_link
-from rewards import current_prize, days_left
-from config import VIP_PRICE, CARD_NUMBER
+from config import VIP_PRICE, CARD_NUMBER, BOT_USERNAME
 from treasure import open_treasure
 
-# ========== کیبورد منو (همون که قبلاً توی keyboards.py بود) ==========
+# ========== کیبورد منو ==========
 def main_menu():
     keyboard = [
         ["🎮 شروع بازی"],
@@ -19,6 +17,25 @@ def main_menu():
         ["🎧 پشتیبانی"]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
+# ========== سیستم دعوت (جایگزین referral.py) ==========
+referrals = {}
+invited_by = {}
+
+def add_referral(user_id, inviter_id):
+    if user_id == inviter_id or user_id in invited_by:
+        return
+    invited_by[user_id] = inviter_id
+    referrals[inviter_id] = referrals.get(inviter_id, 0) + 1
+
+def get_referrals(user_id):
+    return referrals.get(user_id, 0)
+
+def referral_link(user_id):
+    return f"https://t.me/{BOT_USERNAME}?start={user_id}"
+
+def top_referrers():
+    return sorted(referrals.items(), key=lambda x: x[1], reverse=True)
 
 # ========== هندلرها ==========
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
