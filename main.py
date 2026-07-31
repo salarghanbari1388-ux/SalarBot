@@ -1,4 +1,6 @@
 import os
+import threading
+from flask import Flask, jsonify
 from telegram import Update
 from telegram.ext import (
     Application,
@@ -32,6 +34,20 @@ TOKEN = os.getenv("BOT_TOKEN")
 BOT_USERNAME = "SalarPlay137Bot"
 ADMIN_ID = 8646600079
 
+# ========== راه‌اندازی سرور Flask برای Health Check ==========
+app = Flask(__name__)
+
+@app.route('/')
+@app.route('/health')
+def health_check():
+    return jsonify({"status": "ok"}), 200
+
+def run_flask():
+    port = int(os.getenv("PORT", 8080))
+    # host=0.0.0.0 برای دسترسی از بیرون (رندر نیاز داره)
+    app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
+
+# ============================================================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
@@ -139,15 +155,22 @@ async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def main():
-    app = Application.builder().token(TOKEN).build()
+    # ۱. اجرای سرور Flask در یک ترد جداگانه
+    flask_thread = threading.Thread(target=run_flask, daemon=True)
+    flask_thread.start()
+    print("✅ سرور HTTP روی پورت", os.getenv("PORT", 8080), "راه افتاد.")
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.PHOTO, photo_handler))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler))
+    # ۲. ساخت و اجرای ربات
+    application = Application.builder().token(TOKEN).build()
 
-    setup_admin(app)
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(MessageHandler(filters.PHOTO, photo_handler))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler))
 
-    app.run_polling()
+    setup_admin(application)
+
+    print("🤖 ربات شروع به کار کرد...")
+    application.run_polling()
 
 
 if __name__ == "__main__":
