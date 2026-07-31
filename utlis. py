@@ -1,0 +1,19 @@
+from datetime import datetime
+import database as db
+
+def is_vip_valid(expiry_str):
+    if not expiry_str:
+        return False
+    try:
+        return datetime.fromisoformat(expiry_str) > datetime.now()
+    except:
+        return False
+
+def calculate_vip_price():
+    total_users = db.get_total_users_count()
+    base = int(db.get_setting("base_vip_price") or 40000)
+    increment = int(db.get_setting("price_increment_per_100_users") or 2000)
+    return base + (total_users // 100) * increment
+
+def get_referral_link(bot_username, user_id):
+    return f"https://t.me/{bot_username}?start=ref_{user_id}"
