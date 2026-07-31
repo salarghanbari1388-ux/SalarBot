@@ -1,5 +1,6 @@
 import os
 import threading
+import asyncio
 from flask import Flask, jsonify
 from telegram import Update
 from telegram.ext import (
@@ -32,13 +33,10 @@ from admin_panel import setup_admin
 
 # ========== تنظیمات اولیه ==========
 TOKEN = os.getenv("BOT_TOKEN")
-BOT_USERNAME = "SalarPlay137Bot"
-ADMIN_ID = 8646600079
-
 if not TOKEN:
     raise ValueError("BOT_TOKEN تنظیم نشده!")
 
-# ========== سرور Flask برای Health Check ==========
+# ========== سرور Flask ==========
 flask_app = Flask(__name__)
 
 @flask_app.route('/')
@@ -50,15 +48,10 @@ def run_flask():
     port = int(os.getenv("PORT", 8080))
     flask_app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
 
-# ==========================================
-
-# ========== توابع ربات (بدون تغییر) ==========
+# ========== توابع ربات ==========
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    register_user(
-        user.id,
-        user.username or user.first_name
-    )
+    register_user(user.id, user.username or user.first_name)
 
     if context.args:
         try:
@@ -72,7 +65,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=main_menu()
     )
 
-
 async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     user_id = update.effective_user.id
@@ -81,14 +73,11 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not is_vip(user_id):
             if not use_free_question(user_id):
                 await update.message.reply_text(
-                    "⛔ سهمیه رایگان امروزت تمام شده.\n\n"
-                    "⭐ برای ادامه بازی VIP بگیر."
+                    "⛔ سهمیه رایگان امروزت تمام شده.\n\n⭐ برای ادامه بازی VIP بگیر."
                 )
                 return
-
         riddle = get_riddle()
         save_answer(user_id, riddle["answer"])
-
         await update.message.reply_text(
             f"🧩 معما:\n\n{riddle['question']}\n\nجوابت رو بفرست."
         )
@@ -102,10 +91,8 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif text == "⭐ VIP":
         context.user_data["vip_request"] = True
         await update.message.reply_text(
-            "👑 خرید VIP\n\n"
-            "💰 مبلغ: ۴۰ هزار تومان\n\n"
-            "💳 شماره کارت:\n"
-            "6219-8614-5120-3524\n\n"
+            "👑 خرید VIP\n\n💰 مبلغ: ۴۰ هزار تومان\n\n"
+            "💳 شماره کارت: 6219-8614-5120-3524\n\n"
             "بعد از پرداخت عکس رسید را ارسال کن."
         )
 
@@ -113,9 +100,7 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         link = referral_link(user_id)
         count = get_referrals(user_id)
         await update.message.reply_text(
-            f"🎁 دعوت دوستان\n\n"
-            f"🔗 لینک تو:\n{link}\n\n"
-            f"👥 دعوت موفق: {count}"
+            f"🎁 دعوت دوستان\n\n🔗 لینک تو:\n{link}\n\n👥 دعوت موفق: {count}"
         )
 
     elif text == "🎧 پشتیبانی":
@@ -136,31 +121,22 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await update.message.reply_text("❌ جواب درست نیست، دوباره تلاش کن.")
 
-
 async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data.get("vip_request"):
         photo = update.message.photo[-1].file_id
         add_vip_request(update.effective_user.id, photo)
 
         await context.bot.send_photo(
-            chat_id=ADMIN_ID,
+            chat_id=8646600079,  # ADMIN_ID
             photo=photo,
-            caption=(
-                "💳 رسید VIP جدید\n\n"
-                f"👤 کاربر: {update.effective_user.id}\n"
-                "⏳ منتظر بررسی"
-            )
+            caption=f"💳 رسید VIP جدید\n\n👤 کاربر: {update.effective_user.id}\n⏳ منتظر بررسی"
         )
 
-        await update.message.reply_text(
-            "✅ رسید دریافت شد.\n⏳ منتظر تایید ادمین باشید."
-        )
+        await update.message.reply_text("✅ رسید دریافت شد.\n⏳ منتظر تایید ادمین باشید.")
         context.user_data["vip_request"] = False
 
-# ==========================================
-
 # ========== تابع اصلی ==========
-def main():
+async def main():
     # ساخت اپلیکیشن
     application = Application.builder().token(TOKEN).build()
 
@@ -170,18 +146,25 @@ def main():
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler))
     setup_admin(application)
 
-    # حذف webhook قبلی (اگر وجود داشته باشد)
-    application.bot.delete_webhook(drop_pending_updates=True)
-    print("✅ Webhook قبلی حذف شد.")
+    # ====== پاک‌سازی کامل Webhook ======
+    print("🔄 در حال پاک‌سازی Webhook قبلی...")
+    try:
+        await application.bot.delete_webhook(drop_pending_updates=True)
+        print("✅ Webhook با موفقیت حذف شد.")
+    except Exception as e:
+        print(f"⚠️ خطا در حذف Webhook: {e}")
 
-    # اجرای Flask در ترد جداگانه
+    # ====== اجرای Flask در ترد جداگانه ======
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
     print(f"🚀 سرور HTTP روی پورت {os.getenv('PORT', 8080)} راه افتاد.")
 
-    # اجرای Polling (با drop_pending_updates=True برای جلوگیری از Conflict)
+    # ====== شروع Polling با تنظیمات مقاوم ======
     print("🤖 ربات با Polling شروع به کار کرد...")
-    application.run_polling(drop_pending_updates=True)
+    await application.run_polling(
+        drop_pending_updates=True,
+        allowed_updates=["message", "callback_query"]  # فقط انواع مورد نیاز
+    )
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
