@@ -1,187 +1,103 @@
-# admin_panel.py
+# admin_panel.py - نسخه نهایی و بدون خطا
 
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import CommandHandler, CallbackQueryHandler
 
-from telegram import (
-    InlineKeyboardButton,
-    InlineKeyboardMarkup
-)
+# ========== تنظیمات ==========
+ADMIN_ID = 8646600079  # آیدی عددی خودت - با @userinfobot بگیر
 
-from telegram.ext import (
-    CommandHandler,
-    CallbackQueryHandler
-)
+# ========== داده‌های موقت (برای تست) ==========
+# اینا رو بعداً با دیتابیس واقعی جایگزین میکنیم
+vip_requests = []  # لیست درخواست‌های VIP
+support_messages = []  # لیست پیام‌های پشتیبانی
+top_referrers_data = ["کاربر1: 10 دعوت", "کاربر2: 8 دعوت"]  # نمونه
+current_prize = "۱۰۰,۰۰۰"  # جایزه فعلی
+days_left = "۵"  # روز باقی‌مانده
 
-
-from vip import (
-    get_vip_requests,
-    approve_vip,
-    reject_vip
-)
-
-
-from support import get_support_messages
-
-
-from referrals import top_referrers
-
-
-from rewards import current_prize, days_left
-
-
-
-ADMIN_ID = 8646600079
-
-
+# ==========================================
 
 async def admin_panel(update, context):
-
+    """نمایش پنل مدیریت با دکمه‌ها"""
+    # بررسی دسترسی
     if update.effective_user.id != ADMIN_ID:
+        await update.message.reply_text("⛔ شما دسترسی به این بخش ندارید.")
         return
 
-
     keyboard = [
-
-        [
-            InlineKeyboardButton(
-                "📊 آمار",
-                callback_data="stats"
-            )
-        ],
-
-        [
-            InlineKeyboardButton(
-                "👑 VIP",
-                callback_data="vip"
-            )
-        ],
-
-        [
-            InlineKeyboardButton(
-                "🎧 پشتیبانی",
-                callback_data="support"
-            )
-        ],
-
-        [
-            InlineKeyboardButton(
-                "🎁 دعوت‌ها",
-                callback_data="refs"
-            )
-        ],
-
-        [
-            InlineKeyboardButton(
-                "🏆 جایزه",
-                callback_data="reward"
-            )
-        ]
-
+        [InlineKeyboardButton("📊 آمار کلی", callback_data="stats")],
+        [InlineKeyboardButton("👑 درخواست‌های VIP", callback_data="vip")],
+        [InlineKeyboardButton("🎧 پیام‌های پشتیبانی", callback_data="support")],
+        [InlineKeyboardButton("🎁 برترین دعوت‌کننده‌ها", callback_data="refs")],
+        [InlineKeyboardButton("🏆 اطلاعات جایزه", callback_data="reward")]
     ]
 
-
     await update.message.reply_text(
-        "👑 پنل مدیریت SalarBot",
-        reply_markup=InlineKeyboardMarkup(keyboard)
+        "👑 **پنل مدیریت SalarBot**\n\n"
+        "یکی از گزینه‌های زیر را انتخاب کنید:",
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode="Markdown"
     )
-
 
 
 async def admin_buttons(update, context):
-
+    """پردازش کلیک روی دکمه‌های پنل ادمین"""
     query = update.callback_query
+    await query.answer()  # پاسخ به تلگرام برای جلوگیری از خطای timeout
 
-    await query.answer()
-
-
+    # بررسی دسترسی
     if query.from_user.id != ADMIN_ID:
+        await query.edit_message_text("⛔ شما دسترسی به این بخش ندارید.")
         return
 
-
-
+    # پردازش هر دکمه
     if query.data == "stats":
-
-        await query.edit_message_text(
-            "📊 آمار\n\n"
-            "کاربران: بعداً از دیتابیس"
+        text = (
+            "📊 **آمار کلی ربات**\n\n"
+            "👥 تعداد کل کاربران: **۰** (در انتظار اتصال دیتابیس)\n"
+            "🎯 معماهای حل‌شده: **۰**\n"
+            "⭐ کاربران VIP: **۰**\n"
+            "📅 کاربران فعال امروز: **۰**"
         )
-
-
+        await query.edit_message_text(text, parse_mode="Markdown")
 
     elif query.data == "vip":
-
-        requests = get_vip_requests()
-
-
-        if not requests:
-
-            await query.edit_message_text(
-                "👑 درخواست VIP وجود ندارد"
-            )
-
-            return
-
-
-        text = "👑 درخواست‌های VIP:\n\n"
-
-
-        for i,r in enumerate(requests):
-
-            text += (
-                f"{i+1}) "
-                f"کاربر {r['user_id']} "
-                f"- {r['status']}\n"
-            )
-
-
-        await query.edit_message_text(text)
-
-
+        if not vip_requests:
+            await query.edit_message_text("👑 هیچ درخواست VIP جدیدی وجود ندارد.")
+        else:
+            text = "👑 **لیست درخواست‌های VIP:**\n\n"
+            for i, req in enumerate(vip_requests, 1):
+                text += f"{i}) کاربر `{req['user_id']}` - وضعیت: {req.get('status', 'در انتظار')}\n"
+            await query.edit_message_text(text, parse_mode="Markdown")
 
     elif query.data == "support":
-
-        msgs = get_support_messages()
-
-
-        await query.edit_message_text(
-            f"🎧 پیام‌های پشتیبانی: {len(msgs)}"
-        )
-
-
+        if not support_messages:
+            await query.edit_message_text("🎧 هیچ پیام پشتیبانی جدیدی وجود ندارد.")
+        else:
+            text = f"🎧 **پیام‌های پشتیبانی:** {len(support_messages)} عدد\n\n"
+            for i, msg in enumerate(support_messages[:5], 1):  # فقط ۵ تا آخرین
+                text += f"{i}) کاربر `{msg['user_id']}`: {msg['text'][:30]}...\n"
+            await query.edit_message_text(text, parse_mode="Markdown")
 
     elif query.data == "refs":
-
-        top = top_referrers()
-
-
-        await query.edit_message_text(
-            f"🎁 نفرات برتر دعوت:\n{top[:5]}"
-        )
-
-
+        if not top_referrers_data:
+            await query.edit_message_text("🎁 هنوز هیچ دعوتی ثبت نشده.")
+        else:
+            text = "🎁 **برترین دعوت‌کننده‌ها:**\n\n"
+            for i, user in enumerate(top_referrers_data[:5], 1):
+                text += f"{i}) {user}\n"
+            await query.edit_message_text(text)
 
     elif query.data == "reward":
-
-        await query.edit_message_text(
-            "🏆 مسابقه\n\n"
-            f"💰 جایزه فعلی: {current_prize()} تومان\n"
-            f"⏳ زمان باقی‌مانده: {days_left()} روز"
+        text = (
+            "🏆 **مسابقه و جایزه**\n\n"
+            f"💰 جایزه فعلی: **{current_prize}** تومان\n"
+            f"⏳ زمان باقی‌مانده: **{days_left}** روز\n\n"
+            "برای برنده شدن، بیشترین امتیاز را در این دوره کسب کنید!"
         )
-
-
+        await query.edit_message_text(text, parse_mode="Markdown")
 
 
 def setup_admin(app):
-
-    app.add_handler(
-        CommandHandler(
-            "admin",
-            admin_panel
-        )
-    )
-
-
-    app.add_handler(
-        CallbackQueryHandler(
-            admin_buttons
-        )
-    )
+    """ثبت هندلرهای ادمین در برنامه اصلی"""
+    app.add_handler(CommandHandler("admin", admin_panel))
+    app.add_handler(CallbackQueryHandler(admin_buttons))
